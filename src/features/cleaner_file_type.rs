@@ -3,7 +3,7 @@ use std::fs;
 use std::path::Path;
 use walkdir::WalkDir;
 
-pub fn directory_cleaner(dir: &String, paths_to_clear: &[String], size: u64) -> Result<()> {
+pub fn directory_cleaner_based_on_file_type(dir: &String, paths_to_clear: &[String]) -> Result<()> {
     for entry in WalkDir::new(dir).into_iter().filter_map(|f| {
         match f {
             Ok(entry) => Some(entry), // Return valid entries
@@ -23,7 +23,7 @@ pub fn directory_cleaner(dir: &String, paths_to_clear: &[String], size: u64) -> 
             let ext = path.extension().and_then(|ex| ex.to_str()).unwrap_or("");
 
             if paths_to_clear.iter().any(|p| ext == p) {
-                let metadata = fs::metadata(path)
+                fs::metadata(path)
                     .with_context(|| format!("Failed to read metadata for file: {:?}", path))?;
 
                 println!("Deleting file: {:?}", path);
@@ -31,7 +31,7 @@ pub fn directory_cleaner(dir: &String, paths_to_clear: &[String], size: u64) -> 
                     .with_context(|| format!("Failed to delete file: {:?}", path))?;
             }
         } else {
-            println!("File does not exist, {}", path.display())
+            eprintln!("File does not exist, {}", path.display())
         }
     }
 
