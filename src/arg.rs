@@ -7,7 +7,6 @@ pub struct Args {
     pub dir: String,
 }
 
-
 pub fn parse_args() -> Args {
     let arg = Command::new(APP)
         .version("1.0")
@@ -16,30 +15,32 @@ pub fn parse_args() -> Args {
                 .short('d')
                 .long("dir")
                 .required(true)
-                .help("Directory to clean up")
+                .help("Directory to clean up"),
         )
         .arg(
             Arg::new("types")
                 .short('t')
                 .long("types")
                 .required(false)
-                .value_delimiter(',')
-                .help("Types to clean (comma-separated)")
-        ).arg(
-        Arg::new("size")
-            .short('s')
-            .long("size")
-            .required(false)
-            .value_parser(clap::value_parser!(u64))
-            .help("Minimum size to clear (in bytes)")
-    ).get_matches();
+                .num_args(1..) // Allow multiple values
+                .help("Types to clean (space-separated)"),
+        )
+        .arg(
+            Arg::new("size")
+                .short('s')
+                .long("size")
+                .required(false)
+                .value_parser(clap::value_parser!(u64))
+                .help("Minimum size to clear (in bytes)"),
+        )
+        .get_matches();
 
     let dir = match arg.try_get_one::<String>("directory") {
         Ok(Some(dir)) => dir.to_string(),
         Ok(None) => {
             eprintln!("Error: Directory to clean is missing");
             std::process::exit(1);
-        },
+        }
         Err(e) => {
             eprintln!("Error processing directory: {:?}", e);
             std::process::exit(1);
