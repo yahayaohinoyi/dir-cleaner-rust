@@ -10,7 +10,7 @@ fn main() -> Result<()> {
     println!("File types to clean: {:?}", args.types);
     println!("Minimum file size: {} bytes", args.min_size);
 
-    features::cleaner::directory_cleaner(&args.dir, &args.types, args.min_size)?;
+    features::cleaner_file_type::directory_cleaner_based_on_file_type(&args.dir, &args.types, args.min_size)?;
 
     println!("Cleaning completed successfully.");
 
@@ -32,7 +32,7 @@ mod tests {
 
         let file_types = vec!["txt".to_string()];
         let dir_str = temp_dir.path().to_str().unwrap().to_string();
-        features::cleaner::directory_cleaner(&dir_str, &file_types, 500)?;
+        features::cleaner_file_type::directory_cleaner_based_on_file_type(&dir_str, &file_types, 500)?;
 
         assert!(!file_path.exists(), "File should have been deleted");
 
