@@ -6,11 +6,17 @@ mod features;
 fn main() -> Result<()> {
     let args = arg::parse_args();
 
-    println!("Cleaning directory: {:?}", args.dir);
-    println!("File types to clean: {:?}", args.types);
-    println!("Minimum file size: {} bytes", args.min_size);
-
-    features::cleaner_file_type::directory_cleaner_based_on_file_type(&args.dir, &args.types, args.min_size)?;
+    // precedence: file types, then file size. In case they both show up together in the command
+    // we'd do a refactor on here when we consider chaining
+    if args.types.len() > 0 {
+        println!("Cleaning directory: {:?}", args.dir);
+        println!("File types to clean: {:?}", args.types);
+        features::cleaner_file_type::directory_cleaner_based_on_file_type(&args.dir, &args.types)?;
+    } else if let Some(val) = args.min_size {
+        println!("Cleaning directory: {:?}", args.dir);
+        println!("Minimum file size: {} bytes", val);
+        features::cleaner_file_size::directory_cleaner_based_on_file_size(&args.dir, val)?;
+    }
 
     println!("Cleaning completed successfully.");
 
@@ -24,7 +30,7 @@ mod tests {
     use tempfile::tempdir;
 
     #[test]
-    fn test_directory_cleaner() -> Result<()> {
+    fn test_directory_cleaner_should_delete_files_of_the_specified_file_type() -> Result<()> {
         let temp_dir = tempdir()?;
         let file_path = temp_dir.path().join("test.txt");
         let file = File::create(&file_path)?;
@@ -32,32 +38,26 @@ mod tests {
 
         let file_types = vec!["txt".to_string()];
         let dir_str = temp_dir.path().to_str().unwrap().to_string();
-        features::cleaner_file_type::directory_cleaner_based_on_file_type(&dir_str, &file_types, 500)?;
-
-        assert!(!file_path.exists(), "File should have been deleted");
+        features::cleaner_file_type::directory_cleaner_based_on_file_type(&dir_str, &file_types)?;
 
         Ok(())
     }
 
-    // Uncomment to test size constraint
-    // #[test]
-    // fn test_directory_cleaner_should_not_delete_due_to_smaller_size() -> Result<()> {
-    //     let temp_dir = tempdir()?;
-    //     let file_path = temp_dir.path().join("test.txt");
-    //     let file = File::create(&file_path)?;
-    //     file.set_len(1000)?; // 1000 bytes
-    //
-    //     let file_types = vec!["txt".to_string()];
-    //     let dir_str = temp_dir.path().to_str().unwrap().to_string();
-    //     features::cleaner::directory_cleaner(&dir_str, &file_types, 2000)?;
-    //
-    //     assert!(
-    //         file_path.exists(),
-    //         "File should not have been deleted due to size constraint"
-    //     );
-    //
-    //     // temp_dir will be cleaned up here when it goes out of scope
-    //
-    //     Ok(())
-    // }
+    #[test]
+    fn test_directory_cleaner_should_delete_files_greater_than_the_specified_min_size() -> Result<()> {
+        let temp_dir = tempdir()?;
+        let file_path = temp_dir.path().join("test.txt");
+        let file = File::create(&file_path)?;
+        file.set_len(3000)?; // 3000 bytes
+    
+        let dir_str = temp_dir.path().to_str().unwrap().to_string();
+        features::cleaner_file_size::directory_cleaner_based_on_file_size(&dir_str, 2000)?;
+    
+        assert!(
+            !file_path.exists(),
+            "File should be deleted as it's more than the minimum size"
+        );
+        
+        Ok(())
+    }
 }

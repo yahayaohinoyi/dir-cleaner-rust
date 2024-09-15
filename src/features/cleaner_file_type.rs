@@ -3,7 +3,7 @@ use std::fs;
 use std::path::Path;
 use walkdir::WalkDir;
 
-pub fn directory_cleaner_based_on_file_type(dir: &String, paths_to_clear: &[String], _size: u64) -> Result<()> {
+pub fn directory_cleaner_based_on_file_type(dir: &String, paths_to_clear: &[String]) -> Result<()> {
     for entry in WalkDir::new(dir).into_iter().filter_map(|f| {
         match f {
             Ok(entry) => Some(entry), // Return valid entries

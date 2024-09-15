@@ -3,7 +3,7 @@ use clap::{Arg, Command};
 const APP: &str = "Directory cleaner";
 pub struct Args {
     pub types: Vec<String>,
-    pub min_size: u64,
+    pub min_size: Option<u64>,
     pub dir: String,
 }
 
@@ -52,9 +52,9 @@ pub fn parse_args() -> Args {
         None => Vec::new(),
     };
 
-    let min_size = match arg.get_one::<u64>("size") {
-        Some(size) => *size,
-        None => 0,
+    let min_size: Option<u64> = match arg.get_one::<u64>("size") {
+        Some(size) => Some(*size),
+        None => None,
     };
 
     Args {
