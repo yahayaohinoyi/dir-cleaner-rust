@@ -26,11 +26,9 @@ pub fn directory_cleaner(dir: &String, paths_to_clear: &[String], size: u64) -> 
                 let metadata = fs::metadata(path)
                     .with_context(|| format!("Failed to read metadata for file: {:?}", path))?;
 
-                if metadata.len() >= size {
-                    println!("Deleting file: {:?}", path);
-                    fs::remove_file(path)
-                        .with_context(|| format!("Failed to delete file: {:?}", path))?;
-                }
+                println!("Deleting file: {:?}", path);
+                fs::remove_file(path)
+                    .with_context(|| format!("Failed to delete file: {:?}", path))?;
             }
         } else {
             println!("File does not exist, {}", path.display())
