@@ -4,3 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+clap = { version = "4.0", features = ["derive"] }
+walkdir = "2.3"
+anyhow = "1.0"
+tempfile = "3.12.0"
