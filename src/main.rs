@@ -44,20 +44,21 @@ mod tests {
     }
 
     #[test]
-    fn test_directory_cleaner_should_delete_files_greater_than_the_specified_min_size() -> Result<()> {
+    fn test_directory_cleaner_should_delete_files_greater_than_the_specified_min_size() -> Result<()>
+    {
         let temp_dir = tempdir()?;
         let file_path = temp_dir.path().join("test.txt");
         let file = File::create(&file_path)?;
         file.set_len(3000)?; // 3000 bytes
-    
+
         let dir_str = temp_dir.path().to_str().unwrap().to_string();
         features::cleaner_file_size::directory_cleaner_based_on_file_size(&dir_str, 2000)?;
-    
+
         assert!(
             !file_path.exists(),
             "File should be deleted as it's more than the minimum size"
         );
-        
+
         Ok(())
     }
 }
