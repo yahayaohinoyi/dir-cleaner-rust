@@ -98,7 +98,7 @@ mod tests {
         let file_path_2 = temp_dir.path().join("test2.txt");
         let file_1 = File::create(&file_path_1)?;
         let file_2 = File::create(&file_path_2)?;
-        file_1.set_len(4000)?; // 3000 bytes
+        file_1.set_len(4000)?; // 4000 bytes
         file_2.set_len(500)?; // 500 bytes
 
         let dir_str = temp_dir.path().to_str().unwrap().to_string();
@@ -125,7 +125,7 @@ mod tests {
         let file_path_2 = temp_dir.path().join("test2.txt");
         let file_1 = File::create(&file_path_1)?;
         let file_2 = File::create(&file_path_2)?;
-        file_1.set_len(4000)?; // 3000 bytes
+        file_1.set_len(4000)?; // 4000 bytes
         file_2.set_len(500)?; // 500 bytes
 
         let dir_str = temp_dir.path().to_str().unwrap().to_string();
