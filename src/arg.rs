@@ -36,7 +36,7 @@ pub fn parse_args() -> Args {
         )
         .arg(
             Arg::new("dry_run")
-                .short('n')
+                .short('r')
                 .long("dryrun")
                 .required(false)
                 .value_parser(clap::value_parser!(bool))
