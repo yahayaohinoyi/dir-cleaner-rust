@@ -5,6 +5,7 @@ pub struct Args {
     pub types: Vec<String>,
     pub min_size: Option<u64>,
     pub dir: String,
+    pub dry_run: bool,
 }
 
 pub fn parse_args() -> Args {
@@ -33,6 +34,14 @@ pub fn parse_args() -> Args {
                 .value_parser(clap::value_parser!(u64))
                 .help("Minimum size to clear (in bytes)"),
         )
+        .arg(
+            Arg::new("dry_run")
+                .short('n')
+                .long("dryrun")
+                .required(false)
+                .value_parser(clap::value_parser!(bool))
+                .help("Dry run"),
+        )
         .get_matches();
 
     let dir = match arg.try_get_one::<String>("directory") {
@@ -57,9 +66,15 @@ pub fn parse_args() -> Args {
         None => None,
     };
 
+    let dry_run: bool = match arg.get_one::<bool>("dry_run") {
+        Some(dr) => *dr,
+        None => false,
+    };
+
     Args {
         types,
         min_size,
         dir,
+        dry_run,
     }
 }
