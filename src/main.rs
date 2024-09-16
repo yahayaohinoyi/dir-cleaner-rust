@@ -21,7 +21,7 @@ fn main() -> Result<()> {
     }
 
     if args.types.len() > 0 {
-        println!("Cleaning directory: {:?}", args.dir);
+        println!("Cleaning directory based on file type: {:?}", args.dir);
         println!("File types to clean: {:?}", args.types);
         features::cleaner_file_type::directory_cleaner_based_on_file_type(
             &args.dir,
@@ -29,11 +29,20 @@ fn main() -> Result<()> {
             args.dry_run,
         )?;
     } else if let Some(val) = args.min_size {
-        println!("Cleaning directory: {:?}", args.dir);
+        println!("Cleaning directory based on min size: {:?}", args.dir);
         println!("Minimum file size: {} bytes", val);
         features::cleaner_file_size::directory_cleaner_based_on_file_size(
             &args.dir,
             val,
+            args.dry_run,
+        )?;
+    } else if args.remove_duplicates {
+        println!(
+            "Cleaning directory based on duplicate files: {:?}",
+            args.dir
+        );
+        features::cleaner_file_duplicate::directory_cleaner_based_on_duplicate_files(
+            &args.dir,
             args.dry_run,
         )?;
     }
@@ -139,6 +148,61 @@ mod tests {
         assert!(
             file_path_2.exists(),
             "File should not be deleted in dry run mode"
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_directory_cleaner_should_delete_files_that_are_duplicates() -> Result<()> {
+        let temp_dir = tempdir()?;
+        let file_path_1 = temp_dir.path().join("test 1.txt");
+        let file_path_2 = temp_dir.path().join("test 2.txt");
+        let file_path_3 = temp_dir.path().join("test 3.txt");
+        let file_1 = File::create(&file_path_1)?;
+        let file_2 = File::create(&file_path_2)?;
+        let file_3 = File::create(&file_path_3)?;
+        file_1.set_len(4000)?; // 4000 bytes
+        file_2.set_len(4000)?; // 4000 bytes
+        file_3.set_len(5000)?; // 5000 bytes
+
+        let dir_str = temp_dir.path().to_str().unwrap().to_string();
+        features::cleaner_file_duplicate::directory_cleaner_based_on_duplicate_files(
+            &dir_str, false,
+        )?;
+
+        assert!(
+            !(file_path_1.exists() && file_path_2.exists()),
+            "One of test 1 or test 2 should be deleted"
+        );
+
+        assert!(file_path_3.exists(), "test 3 shouldn't be deleted");
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_directory_cleaner_should_not_delete_files_that_are_duplicates_in_dry_run() -> Result<()>
+    {
+        let temp_dir = tempdir()?;
+        let file_path_1 = temp_dir.path().join("test 1.txt");
+        let file_path_2 = temp_dir.path().join("test 2.txt");
+        let file_path_3 = temp_dir.path().join("test 3.txt");
+        let file_1 = File::create(&file_path_1)?;
+        let file_2 = File::create(&file_path_2)?;
+        let file_3 = File::create(&file_path_3)?;
+        file_1.set_len(4000)?; // 4000 bytes
+        file_2.set_len(4000)?; // 4000 bytes
+        file_3.set_len(5000)?; // 5000 bytes
+
+        let dir_str = temp_dir.path().to_str().unwrap().to_string();
+        features::cleaner_file_duplicate::directory_cleaner_based_on_duplicate_files(
+            &dir_str, true,
+        )?;
+
+        assert!(
+            file_path_1.exists() && file_path_2.exists() && file_path_3.exists(),
+            "One of test 1 or test 2 should be deleted"
         );
 
         Ok(())

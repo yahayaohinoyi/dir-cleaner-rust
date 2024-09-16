@@ -6,6 +6,7 @@ pub struct Args {
     pub min_size: Option<u64>,
     pub dir: String,
     pub dry_run: bool,
+    pub remove_duplicates: bool,
 }
 
 pub fn parse_args() -> Args {
@@ -36,11 +37,19 @@ pub fn parse_args() -> Args {
         )
         .arg(
             Arg::new("dry_run")
-                .short('r')
+                .short('n')
                 .long("dryrun")
                 .required(false)
                 .value_parser(clap::value_parser!(bool))
                 .help("Dry run"),
+        )
+        .arg(
+            Arg::new("remove_duplicates")
+                .short('r')
+                .long("dedup")
+                .required(false)
+                .value_parser(clap::value_parser!(bool))
+                .help("Remove Duplicate"),
         )
         .get_matches();
 
@@ -71,10 +80,16 @@ pub fn parse_args() -> Args {
         None => false,
     };
 
+    let remove_duplicates: bool = match arg.get_one::<bool>("remove_duplicates") {
+        Some(dr) => *dr,
+        None => false,
+    };
+
     Args {
         types,
         min_size,
         dir,
         dry_run,
+        remove_duplicates,
     }
 }
