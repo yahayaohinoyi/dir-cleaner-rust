@@ -1,8 +1,9 @@
 use anyhow::{Context, Result};
-use colored::*;
 use std::fs;
 use std::path::Path;
 use walkdir::WalkDir;
+
+use crate::features::utils::delete_file;
 
 pub fn directory_cleaner_based_on_file_type(
     dir: &String,
@@ -33,14 +34,7 @@ pub fn directory_cleaner_based_on_file_type(
 
                 println!("Deleting file: {:?}", path);
 
-                if !dry_run {
-                    fs::remove_file(path)
-                        .with_context(|| format!("Failed to delete file: {:?}", path))?;
-                } else {
-                    if let Some(pth) = path.to_str() {
-                        println!("\n {} could have been deleted", pth.bold().yellow());
-                    }
-                }
+                delete_file(path, dry_run)?;
             }
         } else {
             eprintln!("File does not exist, {}", path.display())
