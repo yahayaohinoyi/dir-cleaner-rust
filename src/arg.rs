@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use clap::{Arg, Command};
 
 const APP: &str = "Directory cleaner";
@@ -7,6 +8,7 @@ pub struct Args {
     pub dir: String,
     pub dry_run: bool,
     pub remove_duplicates: bool,
+    pub age: Option<String>,
 }
 
 pub fn parse_args() -> Args {
@@ -51,6 +53,14 @@ pub fn parse_args() -> Args {
                 .value_parser(clap::value_parser!(bool))
                 .help("Remove Duplicate"),
         )
+        .arg(
+            Arg::new("age")
+                .short('a')
+                .long("age")
+                .required(false)
+                .value_parser(clap::value_parser!(String))
+                .help("Specify the cutoff date in YYYY-MM-DD format"),
+        )
         .get_matches();
 
     let dir = match arg.try_get_one::<String>("directory") {
@@ -85,11 +95,18 @@ pub fn parse_args() -> Args {
         None => false,
     };
 
+    let age: Option<String> = match arg.try_get_one::<String>("age") {
+        Ok(Some(date)) => Some(date.to_string()),
+        Ok(None) => None,
+        Err(_) => None,
+    };
+
     Args {
         types,
         min_size,
         dir,
         dry_run,
         remove_duplicates,
+        age,
     }
 }

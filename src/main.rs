@@ -48,6 +48,17 @@ fn main() -> Result<()> {
             args.dry_run,
         )?;
     }
+    if let Some(age_value) = args.age {
+        println!(
+            "Cleaning directory based on age: {:?}",
+            age_value
+        );
+        features::cleaner_last_modified_time::directory_cleaner_based_on_age(
+            &args.dir,
+            age_value,
+            args.dry_run
+        )?;
+    }
 
     println!("Cleaning completed successfully.");
 
@@ -277,4 +288,82 @@ mod tests {
         );
         Ok(())
     }
+
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        use std::fs;
+        use tempfile::tempdir;
+        use chrono::{Utc, TimeZone, DateTime};
+        use filetime::{set_file_times, FileTime};
+        use std::path::Path;
+
+        fn set_file_modification_time(path: &Path, datetime: DateTime<Utc>) {
+            let timestamp = datetime.timestamp();
+            let file_time = FileTime::from_unix_time(timestamp, 0);
+            set_file_times(path, file_time, file_time).expect("Failed to set file times");
+        }
+
+        #[test]
+        fn test_files_older_than_cutoff_date() {
+            let dir = tempdir().unwrap();
+            let dir_path = dir.path().to_str().unwrap().to_string();
+
+            // Create test files
+            let file_path_older = dir.path().join("older_file.txt");
+            let file_path_newer = dir.path().join("newer_file.txt");
+
+            // Set cutoff date to 1 day ago
+            let cutoff_date = Utc::now() - chrono::Duration::days(1);
+            let cutoff_date_str = cutoff_date.format("%Y-%m-%d").to_string();
+
+            // Create files
+            fs::write(&file_path_older, "older file content").unwrap();
+            fs::write(&file_path_newer, "newer file content").unwrap();
+
+            // Set file modification times (older and newer than the cutoff date)
+            set_file_modification_time(&file_path_older, cutoff_date - chrono::Duration::days(2)); // Older than cutoff
+            set_file_modification_time(&file_path_newer, cutoff_date + chrono::Duration::days(2)); // Newer than cutoff
+
+            // Run directory cleaner
+            let result = features::cleaner_last_modified_time::directory_cleaner_based_on_age(
+                &dir_path,
+                cutoff_date_str,
+                false, // not a dry run, actually delete files
+            );
+
+            assert!(result.is_ok());
+            assert!(!file_path_older.exists()); // file should be deleted
+            assert!(file_path_newer.exists()); // file should not be deleted
+        }
+
+        #[test]
+        fn test_dry_run_mode_files_older_than_cutoff_date() {
+            let dir = tempdir().unwrap();
+            let dir_path = dir.path().to_str().unwrap().to_string();
+
+            // Create a test file
+            let file_path = dir.path().join("test_file.txt");
+            fs::write(&file_path, "test content").unwrap();
+
+            // Set cutoff date to 1 day ago
+            let cutoff_date = Utc::now() - chrono::Duration::days(1);
+            let cutoff_date_str = cutoff_date.format("%Y-%m-%d").to_string();
+
+            // Set file modification time (older than cutoff)
+            set_file_modification_time(&file_path, cutoff_date - chrono::Duration::days(2));
+
+            // Run directory cleaner in dry run mode
+            let result = features::cleaner_last_modified_time::directory_cleaner_based_on_age(
+                &dir_path,
+                cutoff_date_str,
+                true, // dry run mode
+            );
+
+            assert!(result.is_ok());
+            assert!(file_path.exists()); // file should not be deleted
+        }
+    }
+
 }
