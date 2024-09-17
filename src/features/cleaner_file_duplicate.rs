@@ -1,8 +1,9 @@
 use anyhow::{Context, Result};
-use colored::*;
 use std::collections::HashSet;
 use std::fs;
 use walkdir::WalkDir;
+
+use super::utils::delete_file;
 
 fn get_file_key(file_name: Option<&std::ffi::OsStr>, file_size: u64) -> Option<String> {
     file_name.and_then(|name| name.to_str()).map(|name| {
@@ -31,18 +32,7 @@ pub fn directory_cleaner_based_on_duplicate_files(directory: &String, dry_run: b
                     match file_key {
                         Some(file_key) => {
                             if set.contains(&file_key) {
-                                if !dry_run {
-                                    fs::remove_file(path).with_context(|| {
-                                        format!("Failed to delete file: {:?}", path)
-                                    })?;
-                                } else {
-                                    if let Some(pth) = path.to_str() {
-                                        println!(
-                                            "\n {} could have been deleted",
-                                            pth.bold().yellow()
-                                        );
-                                    }
-                                }
+                                delete_file(path, dry_run)?;
                             } else {
                                 set.insert(file_key);
                             }
