@@ -1,5 +1,5 @@
 
-# **Project Name** - Directory Cleaner Tool
+# Directory Cleaner Tool
 
 ## **Overview**
 This is a command-line tool written in Rust that helps users clean their directories by removing unwanted files based on various filters such as file type, size, age, and more. The tool offers a range of features to enhance file management efficiency, including safe mode (dry run), backups, duplicate file removal, logging, and configuration file support.
