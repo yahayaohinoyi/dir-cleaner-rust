@@ -142,4 +142,4 @@ Special thanks to all contributors and users of this tool.
 ---
 
 ## **Contact**
-For any queries or support, please open an issue on GitHub or reach out to the maintainers via email at `yahaya.suleiman2204@gmail.com`.
+For any queries or support, please open an issue on GitHub or reach out to the maintainers via email at `yahaya.suleiman2204@gmail.com` or `mohammedmubarak314@gmail.com`.
