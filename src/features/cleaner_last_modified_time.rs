@@ -1,9 +1,9 @@
+use crate::features::utils;
 use anyhow::{Context, Result};
-use chrono::{DateTime, Utc, NaiveDate, TimeZone};
+use chrono::{DateTime, NaiveDate, TimeZone, Utc};
 use colored::*;
 use std::fs;
 use walkdir::WalkDir;
-use crate::features::utils;
 
 pub fn directory_cleaner_based_on_age(
     directory: &String,

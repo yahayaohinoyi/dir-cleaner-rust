@@ -49,14 +49,11 @@ fn main() -> Result<()> {
         )?;
     }
     if let Some(age_value) = args.age {
-        println!(
-            "Cleaning directory based on age: {:?}",
-            age_value
-        );
+        println!("Cleaning directory based on age: {:?}", age_value);
         features::cleaner_last_modified_time::directory_cleaner_based_on_age(
             &args.dir,
             age_value,
-            args.dry_run
+            args.dry_run,
         )?;
     }
 
@@ -289,15 +286,14 @@ mod tests {
         Ok(())
     }
 
-
     #[cfg(test)]
     mod tests {
         use super::*;
-        use std::fs;
-        use tempfile::tempdir;
-        use chrono::{Utc, TimeZone, DateTime};
+        use chrono::{DateTime, TimeZone, Utc};
         use filetime::{set_file_times, FileTime};
+        use std::fs;
         use std::path::Path;
+        use tempfile::tempdir;
 
         fn set_file_modification_time(path: &Path, datetime: DateTime<Utc>) {
             let timestamp = datetime.timestamp();
@@ -365,5 +361,4 @@ mod tests {
             assert!(file_path.exists()); // file should not be deleted
         }
     }
-
 }
