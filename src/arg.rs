@@ -1,4 +1,3 @@
-use chrono::NaiveDate;
 use clap::{Arg, Command};
 
 const APP: &str = "Directory cleaner";
