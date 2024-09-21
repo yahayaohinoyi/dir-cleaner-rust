@@ -432,6 +432,45 @@ mod tests {
         Ok(())
     }
 
+    #[test]
+    fn test_directory_cleaner_should_show_correct_report_after_deleting_files_greater_than_the_specified_min_size(
+    ) -> Result<()> {
+        let temp_dir = tempdir()?;
+        let file_path_1 = temp_dir.path().join("test1.txt");
+        let file_path_2 = temp_dir.path().join("test2.txt");
+        let file_1 = File::create(&file_path_1)?;
+        let file_2 = File::create(&file_path_2)?;
+        file_1.set_len(4000)?; // 4000 bytes
+        file_2.set_len(500)?; // 500 bytes
+
+        let mut report = ReportData::new();
+
+        let dir_str = temp_dir.path().to_str().unwrap().to_string();
+        features::cleaner_file_size::directory_cleaner_based_on_file_size(
+            &dir_str,
+            2000,
+            false,
+            &mut report,
+        )?;
+
+        assert!(
+            !file_path_1.exists(),
+            "File should be deleted as it's more than the minimum size"
+        );
+
+        assert!(
+            file_path_2.exists(),
+            "File should not be deleted as it's less than the minimum size"
+        );
+
+        assert!(report.files_deleted == 1);
+        assert!(report.files_scanned == 2);
+        assert!(report.total_files_retained == 1);
+        assert!(report.total_file_size_retained == 500);
+        assert!(report.total_file_size_deleted == 4000);
+        Ok(())
+    }
+
     #[cfg(test)]
     mod tests {
         use super::*;

@@ -43,7 +43,7 @@ pub fn collect_metrics(
     report_data.files_deleted += del_meta.0;
     report_data.files_scanned += 1;
     report_data.total_file_size_deleted += del_meta.1;
-    report_data.total_files_retained = report_data.files_scanned - del_meta.0;
+    report_data.total_files_retained = report_data.files_scanned - report_data.files_deleted;
 
     report_data.total_file_size_retained += metadata.len() as u32;
     report_data.total_file_size_retained -= del_meta.1;
