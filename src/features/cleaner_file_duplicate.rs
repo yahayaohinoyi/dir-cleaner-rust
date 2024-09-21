@@ -22,7 +22,7 @@ pub fn directory_cleaner_based_on_duplicate_files(
 ) -> Result<()> {
     let mut set: HashSet<String> = HashSet::new();
     let mut del_count: u32 = 0;
-    let mut del_size: u32 = 0;
+    let mut del_size: u64 = 0;
     for entry in WalkDir::new(directory).into_iter() {
         match entry {
             Ok(dir) => {
@@ -42,7 +42,7 @@ pub fn directory_cleaner_based_on_duplicate_files(
                             if set.contains(&file_key) {
                                 delete_file(path, dry_run)?;
                                 del_count += 1;
-                                del_size += metadata.len() as u32;
+                                del_size += metadata.len();
                             } else {
                                 set.insert(file_key);
                             }

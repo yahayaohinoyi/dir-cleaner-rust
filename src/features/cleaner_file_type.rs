@@ -15,7 +15,7 @@ pub fn directory_cleaner_based_on_file_type(
     report_data: &mut ReportData,
 ) -> Result<()> {
     let mut del_count: u32 = 0;
-    let mut del_size: u32 = 0;
+    let mut del_size: u64 = 0;
     for entry in WalkDir::new(dir).into_iter().filter_map(|f| {
         match f {
             Ok(entry) => Some(entry), // Return valid entries
@@ -41,7 +41,7 @@ pub fn directory_cleaner_based_on_file_type(
 
                 delete_file(path, dry_run)?;
                 del_count += 1;
-                del_size += metadata.len() as u32;
+                del_size += metadata.len();
             }
             collect_metrics(report_data, metadata, &path, (del_count, del_size));
             del_count = 0;
