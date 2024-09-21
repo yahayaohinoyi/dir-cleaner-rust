@@ -1,7 +1,10 @@
 use anyhow::{Context, Result};
 use chrono::{DateTime, NaiveDate, NaiveTime, TimeZone, Utc};
 use colored::*;
-use std::fs;
+use std::cmp::Ordering;
+use std::fs::{self};
+
+use crate::ReportData;
 
 pub fn delete_file(path: &std::path::Path, dry_run: bool) -> Result<()> {
     if !dry_run {
@@ -29,4 +32,31 @@ pub fn parse_cutoff_date(date_str: &str) -> anyhow::Result<DateTime<Utc>> {
     let cutoff_date = Utc.from_utc_datetime(&naive_datetime);
 
     Ok(cutoff_date)
+}
+
+pub fn collect_metrics(
+    report_data: &mut ReportData,
+    metadata: std::fs::Metadata,
+    path: &std::path::Path,
+    del_meta: (u32, u64),
+) {
+    report_data.files_deleted += del_meta.0;
+    report_data.files_scanned += 1;
+    report_data.total_file_size_deleted += del_meta.1;
+    report_data.total_files_retained = report_data.files_scanned - report_data.files_deleted;
+
+    report_data.total_file_size_retained += metadata.len();
+    report_data.total_file_size_retained -= del_meta.1;
+
+    if let Some(pth) = path.to_str() {
+        match del_meta.0.cmp(&0) {
+            Ordering::Equal => {
+                report_data.paths_retained.push(pth.to_string());
+            }
+            Ordering::Greater => {
+                report_data.paths_deleted.push(pth.to_string());
+            }
+            _ => {}
+        }
+    }
 }
