@@ -5,7 +5,7 @@ use walkdir::WalkDir;
 
 use crate::ReportData;
 
-use super::utils::delete_file;
+use super::utils::{collect_metrics, delete_file};
 
 fn get_file_key(file_name: Option<&std::ffi::OsStr>, file_size: u64) -> Option<String> {
     file_name.and_then(|name| name.to_str()).map(|name| {
@@ -15,8 +15,14 @@ fn get_file_key(file_name: Option<&std::ffi::OsStr>, file_size: u64) -> Option<S
     })
 }
 
-pub fn directory_cleaner_based_on_duplicate_files(directory: &String, dry_run: bool, report_data: &mut ReportData) -> Result<()> {
+pub fn directory_cleaner_based_on_duplicate_files(
+    directory: &String,
+    dry_run: bool,
+    report_data: &mut ReportData,
+) -> Result<()> {
     let mut set: HashSet<String> = HashSet::new();
+    let mut del_count: u32 = 0;
+    let mut del_size: u32 = 0;
     for entry in WalkDir::new(directory).into_iter() {
         match entry {
             Ok(dir) => {
@@ -35,6 +41,8 @@ pub fn directory_cleaner_based_on_duplicate_files(directory: &String, dry_run: b
                         Some(file_key) => {
                             if set.contains(&file_key) {
                                 delete_file(path, dry_run)?;
+                                del_count += 1;
+                                del_size += metadata.len() as u32;
                             } else {
                                 set.insert(file_key);
                             }
@@ -42,6 +50,9 @@ pub fn directory_cleaner_based_on_duplicate_files(directory: &String, dry_run: b
 
                         None => {}
                     }
+                    collect_metrics(report_data, metadata, &path, (del_count, del_size));
+                    del_count = 0;
+                    del_size = 0;
                 } else {
                     eprintln!("File does not exist, {}", path.display())
                 }

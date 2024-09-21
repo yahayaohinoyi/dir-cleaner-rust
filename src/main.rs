@@ -1,6 +1,6 @@
 use anyhow::Result;
 use colored::*;
-
+use std::time::Instant;
 mod arg;
 mod features;
 
@@ -8,10 +8,12 @@ mod features;
 struct ReportData {
     files_scanned: u32,
     files_deleted: u32,
-    total_time_sec: u32,
+    total_time_sec: u64,
     total_file_size_deleted: u32,
     total_file_size_retained: u32,
-    total_files_retained: u32
+    total_files_retained: u32,
+    paths_deleted: Vec<String>,
+    paths_retained: Vec<String>,
 }
 
 impl ReportData {
@@ -22,7 +24,73 @@ impl ReportData {
             total_time_sec: 0,
             total_file_size_deleted: 0,
             total_file_size_retained: 0,
-            total_files_retained: 0
+            total_files_retained: 0,
+            paths_deleted: vec![],
+            paths_retained: vec![],
+        }
+    }
+
+    fn print_report(&self) {
+        // Section headers with bold and different colors
+        println!("{}", "Cleaning Report".bold().underline().blue());
+        println!("");
+
+        // Files scanned
+        println!(
+            "{}: {}",
+            "Files Scanned".bold().cyan(),
+            self.files_scanned.to_string().green()
+        );
+
+        // Files deleted
+        println!(
+            "{}: {}",
+            "Files Deleted".bold().cyan(),
+            self.files_deleted.to_string().red()
+        );
+
+        // Files retained
+        println!(
+            "{}: {}",
+            "Files Retained".bold().cyan(),
+            self.total_files_retained.to_string().yellow()
+        );
+
+        // Time taken in seconds
+        println!(
+            "{}: {}",
+            "Total Time (seconds)".bold().cyan(),
+            self.total_time_sec.to_string().magenta()
+        );
+
+        // File sizes deleted
+        println!(
+            "{}: {} bytes",
+            "Total File Size Deleted".bold().cyan(),
+            self.total_file_size_deleted.to_string().red()
+        );
+
+        // File sizes retained
+        println!(
+            "{}: {} bytes",
+            "Total File Size Retained".bold().cyan(),
+            self.total_file_size_retained.to_string().yellow()
+        );
+
+        // Paths of deleted files (if any)
+        if !self.paths_deleted.is_empty() {
+            println!("\n{}", "Paths Deleted".bold().red());
+            for path in &self.paths_deleted {
+                println!("{}", path.red());
+            }
+        }
+
+        // Paths of retained files (if any)
+        if !self.paths_retained.is_empty() {
+            println!("\n{}", "Paths Retained".bold().yellow());
+            for path in &self.paths_retained {
+                println!("{}", path.yellow());
+            }
         }
     }
 }
@@ -31,6 +99,7 @@ fn main() -> Result<()> {
     let args = arg::parse_args();
 
     let mut report_data = ReportData::new();
+    let start = Instant::now();
 
     if args.dry_run {
         println!("{}", "=== Dry Run Report ===".bold().underline().cyan());
@@ -49,7 +118,7 @@ fn main() -> Result<()> {
             &args.dir,
             &args.types,
             args.dry_run,
-            &mut report_data
+            &mut report_data,
         )?;
     }
     if let Some(val) = args.min_size {
@@ -59,7 +128,7 @@ fn main() -> Result<()> {
             &args.dir,
             val,
             args.dry_run,
-            &mut report_data
+            &mut report_data,
         )?;
     }
     if args.remove_duplicates {
@@ -70,7 +139,7 @@ fn main() -> Result<()> {
         features::cleaner_file_duplicate::directory_cleaner_based_on_duplicate_files(
             &args.dir,
             args.dry_run,
-            &mut report_data
+            &mut report_data,
         )?;
     }
     if let Some(age_value) = args.age {
@@ -79,11 +148,16 @@ fn main() -> Result<()> {
             &args.dir,
             age_value,
             args.dry_run,
-            &mut report_data
+            &mut report_data,
         )?;
     }
 
     println!("Cleaning completed successfully.");
+    let duration = start.elapsed();
+    report_data.total_time_sec = duration.as_secs();
+
+    // show report
+    report_data.print_report();
 
     Ok(())
 }
@@ -109,7 +183,7 @@ mod tests {
             &dir_str,
             &file_types,
             false,
-            &mut report
+            &mut report,
         )?;
 
         assert!(!file_path.exists(), "File should have been deleted");
@@ -133,7 +207,7 @@ mod tests {
             &dir_str,
             &file_types,
             true,
-            &mut report
+            &mut report,
         )?;
 
         assert!(file_path.exists(), "File shouldn't be deleted in dry run");
@@ -155,7 +229,12 @@ mod tests {
         let mut report = ReportData::new();
 
         let dir_str = temp_dir.path().to_str().unwrap().to_string();
-        features::cleaner_file_size::directory_cleaner_based_on_file_size(&dir_str, 2000, false,  &mut report)?;
+        features::cleaner_file_size::directory_cleaner_based_on_file_size(
+            &dir_str,
+            2000,
+            false,
+            &mut report,
+        )?;
 
         assert!(
             !file_path_1.exists(),
@@ -184,7 +263,12 @@ mod tests {
         let mut report = ReportData::new();
 
         let dir_str = temp_dir.path().to_str().unwrap().to_string();
-        features::cleaner_file_size::directory_cleaner_based_on_file_size(&dir_str, 2000, true,  &mut report)?;
+        features::cleaner_file_size::directory_cleaner_based_on_file_size(
+            &dir_str,
+            2000,
+            true,
+            &mut report,
+        )?;
 
         assert!(
             file_path_1.exists(),
@@ -216,7 +300,9 @@ mod tests {
 
         let dir_str = temp_dir.path().to_str().unwrap().to_string();
         features::cleaner_file_duplicate::directory_cleaner_based_on_duplicate_files(
-            &dir_str, false,  &mut report
+            &dir_str,
+            false,
+            &mut report,
         )?;
 
         assert!(
@@ -247,7 +333,9 @@ mod tests {
 
         let dir_str = temp_dir.path().to_str().unwrap().to_string();
         features::cleaner_file_duplicate::directory_cleaner_based_on_duplicate_files(
-            &dir_str, true,  &mut report
+            &dir_str,
+            true,
+            &mut report,
         )?;
 
         assert!(
@@ -276,7 +364,9 @@ mod tests {
 
         let dir_str = temp_dir.path().to_str().unwrap().to_string();
         features::cleaner_file_duplicate::directory_cleaner_based_on_duplicate_files(
-            &dir_str, false, &mut report
+            &dir_str,
+            false,
+            &mut report,
         )?;
 
         assert!(
@@ -284,7 +374,12 @@ mod tests {
             "One of test 1 or test 2 should be deleted"
         );
 
-        features::cleaner_file_size::directory_cleaner_based_on_file_size(&dir_str, 4500, false, &mut report)?;
+        features::cleaner_file_size::directory_cleaner_based_on_file_size(
+            &dir_str,
+            4500,
+            false,
+            &mut report,
+        )?;
 
         assert!(!file_path_3.exists(), "test 3 should now be deleted");
 
@@ -313,7 +408,9 @@ mod tests {
 
         let dir_str = temp_dir.path().to_str().unwrap().to_string();
         features::cleaner_file_duplicate::directory_cleaner_based_on_duplicate_files(
-            &dir_str, true, &mut report
+            &dir_str,
+            true,
+            &mut report,
         )?;
 
         assert!(
@@ -321,7 +418,12 @@ mod tests {
             "All files should still exist"
         );
 
-        features::cleaner_file_size::directory_cleaner_based_on_file_size(&dir_str, 4500, true, &mut report)?;
+        features::cleaner_file_size::directory_cleaner_based_on_file_size(
+            &dir_str,
+            4500,
+            true,
+            &mut report,
+        )?;
 
         assert!(
             file_path_1.exists() && file_path_2.exists() && file_path_3.exists(),
@@ -333,7 +435,7 @@ mod tests {
     #[cfg(test)]
     mod tests {
         use super::*;
-        use chrono::{DateTime, TimeZone, Utc};
+        use chrono::{DateTime, Utc};
         use filetime::{set_file_times, FileTime};
         use std::fs;
         use std::path::Path;
@@ -373,7 +475,7 @@ mod tests {
                 &dir_path,
                 cutoff_date_str,
                 false, // not a dry run, actually delete files
-                &mut report
+                &mut report,
             );
 
             assert!(result.is_ok());
@@ -404,7 +506,7 @@ mod tests {
                 &dir_path,
                 cutoff_date_str,
                 true, // dry run mode
-                &mut report
+                &mut report,
             );
 
             assert!(result.is_ok());
