@@ -56,7 +56,7 @@ pub fn collect_metrics(
             Ordering::Greater => {
                 report_data.paths_deleted.push(pth.to_string());
             }
-            Ordering::Less => {}
+            _ => {}
         }
     }
 }
