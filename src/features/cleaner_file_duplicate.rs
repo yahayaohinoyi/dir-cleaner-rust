@@ -3,6 +3,8 @@ use std::collections::HashSet;
 use std::fs;
 use walkdir::WalkDir;
 
+use crate::ReportData;
+
 use super::utils::delete_file;
 
 fn get_file_key(file_name: Option<&std::ffi::OsStr>, file_size: u64) -> Option<String> {
@@ -13,7 +15,7 @@ fn get_file_key(file_name: Option<&std::ffi::OsStr>, file_size: u64) -> Option<S
     })
 }
 
-pub fn directory_cleaner_based_on_duplicate_files(directory: &String, dry_run: bool) -> Result<()> {
+pub fn directory_cleaner_based_on_duplicate_files(directory: &String, dry_run: bool, report_data: &mut ReportData) -> Result<()> {
     let mut set: HashSet<String> = HashSet::new();
     for entry in WalkDir::new(directory).into_iter() {
         match entry {

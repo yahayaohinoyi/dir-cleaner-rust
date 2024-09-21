@@ -2,12 +2,15 @@ use anyhow::{Context, Result};
 use std::fs;
 use walkdir::WalkDir;
 
+use crate::ReportData;
+
 use super::utils::delete_file;
 
 pub fn directory_cleaner_based_on_file_size(
     directory: &String,
     size: u64,
     dry_run: bool,
+    report_data: &mut ReportData
 ) -> Result<()> {
     for entry in WalkDir::new(directory).into_iter() {
         match entry {

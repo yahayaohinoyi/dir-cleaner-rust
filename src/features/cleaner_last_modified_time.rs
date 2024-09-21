@@ -1,4 +1,4 @@
-use crate::features::utils;
+use crate::{features::utils, ReportData};
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
 use colored::*;
@@ -9,6 +9,7 @@ pub fn directory_cleaner_based_on_age(
     directory: &String,
     date: String,
     dry_run: bool,
+    report_data: &mut ReportData
 ) -> Result<()> {
     for entry in WalkDir::new(directory).into_iter() {
         match entry {

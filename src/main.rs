@@ -4,11 +4,33 @@ use colored::*;
 mod arg;
 mod features;
 
+#[derive(Debug)]
+struct ReportData {
+    files_scanned: u32,
+    files_deleted: u32,
+    total_time_sec: u32,
+    total_file_size_deleted: u32,
+    total_file_size_retained: u32,
+    total_files_retained: u32
+}
+
+impl ReportData {
+    fn new() -> Self {
+        ReportData {
+            files_scanned: 0,
+            files_deleted: 0,
+            total_time_sec: 0,
+            total_file_size_deleted: 0,
+            total_file_size_retained: 0,
+            total_files_retained: 0
+        }
+    }
+}
+
 fn main() -> Result<()> {
     let args = arg::parse_args();
 
-    // precedence: file types, then file size. In case they both show up together in the command
-    // we'd do a refactor on here when we consider chaining
+    let mut report_data = ReportData::new();
 
     if args.dry_run {
         println!("{}", "=== Dry Run Report ===".bold().underline().cyan());
@@ -27,6 +49,7 @@ fn main() -> Result<()> {
             &args.dir,
             &args.types,
             args.dry_run,
+            &mut report_data
         )?;
     }
     if let Some(val) = args.min_size {
@@ -36,6 +59,7 @@ fn main() -> Result<()> {
             &args.dir,
             val,
             args.dry_run,
+            &mut report_data
         )?;
     }
     if args.remove_duplicates {
@@ -46,6 +70,7 @@ fn main() -> Result<()> {
         features::cleaner_file_duplicate::directory_cleaner_based_on_duplicate_files(
             &args.dir,
             args.dry_run,
+            &mut report_data
         )?;
     }
     if let Some(age_value) = args.age {
@@ -54,6 +79,7 @@ fn main() -> Result<()> {
             &args.dir,
             age_value,
             args.dry_run,
+            &mut report_data
         )?;
     }
 
@@ -75,12 +101,15 @@ mod tests {
         let file = File::create(&file_path)?;
         file.set_len(1000)?; // 1000 bytes
 
+        let mut report = ReportData::new();
+
         let file_types = vec!["txt".to_string()];
         let dir_str = temp_dir.path().to_str().unwrap().to_string();
         features::cleaner_file_type::directory_cleaner_based_on_file_type(
             &dir_str,
             &file_types,
             false,
+            &mut report
         )?;
 
         assert!(!file_path.exists(), "File should have been deleted");
@@ -96,12 +125,15 @@ mod tests {
         let file = File::create(&file_path)?;
         file.set_len(1000)?; // 1000 bytes
 
+        let mut report = ReportData::new();
+
         let file_types = vec!["txt".to_string()];
         let dir_str = temp_dir.path().to_str().unwrap().to_string();
         features::cleaner_file_type::directory_cleaner_based_on_file_type(
             &dir_str,
             &file_types,
             true,
+            &mut report
         )?;
 
         assert!(file_path.exists(), "File shouldn't be deleted in dry run");
@@ -120,8 +152,10 @@ mod tests {
         file_1.set_len(4000)?; // 4000 bytes
         file_2.set_len(500)?; // 500 bytes
 
+        let mut report = ReportData::new();
+
         let dir_str = temp_dir.path().to_str().unwrap().to_string();
-        features::cleaner_file_size::directory_cleaner_based_on_file_size(&dir_str, 2000, false)?;
+        features::cleaner_file_size::directory_cleaner_based_on_file_size(&dir_str, 2000, false,  &mut report)?;
 
         assert!(
             !file_path_1.exists(),
@@ -147,8 +181,10 @@ mod tests {
         file_1.set_len(4000)?; // 4000 bytes
         file_2.set_len(500)?; // 500 bytes
 
+        let mut report = ReportData::new();
+
         let dir_str = temp_dir.path().to_str().unwrap().to_string();
-        features::cleaner_file_size::directory_cleaner_based_on_file_size(&dir_str, 2000, true)?;
+        features::cleaner_file_size::directory_cleaner_based_on_file_size(&dir_str, 2000, true,  &mut report)?;
 
         assert!(
             file_path_1.exists(),
@@ -176,9 +212,11 @@ mod tests {
         file_2.set_len(4000)?; // 4000 bytes
         file_3.set_len(5000)?; // 5000 bytes
 
+        let mut report = ReportData::new();
+
         let dir_str = temp_dir.path().to_str().unwrap().to_string();
         features::cleaner_file_duplicate::directory_cleaner_based_on_duplicate_files(
-            &dir_str, false,
+            &dir_str, false,  &mut report
         )?;
 
         assert!(
@@ -205,9 +243,11 @@ mod tests {
         file_2.set_len(4000)?; // 4000 bytes
         file_3.set_len(5000)?; // 5000 bytes
 
+        let mut report = ReportData::new();
+
         let dir_str = temp_dir.path().to_str().unwrap().to_string();
         features::cleaner_file_duplicate::directory_cleaner_based_on_duplicate_files(
-            &dir_str, true,
+            &dir_str, true,  &mut report
         )?;
 
         assert!(
@@ -232,9 +272,11 @@ mod tests {
         file_2.set_len(4000)?; // 4000 bytes
         file_3.set_len(5000)?; // 5000 bytes
 
+        let mut report = ReportData::new();
+
         let dir_str = temp_dir.path().to_str().unwrap().to_string();
         features::cleaner_file_duplicate::directory_cleaner_based_on_duplicate_files(
-            &dir_str, false,
+            &dir_str, false, &mut report
         )?;
 
         assert!(
@@ -242,7 +284,7 @@ mod tests {
             "One of test 1 or test 2 should be deleted"
         );
 
-        features::cleaner_file_size::directory_cleaner_based_on_file_size(&dir_str, 4500, false)?;
+        features::cleaner_file_size::directory_cleaner_based_on_file_size(&dir_str, 4500, false, &mut report)?;
 
         assert!(!file_path_3.exists(), "test 3 should now be deleted");
 
@@ -267,9 +309,11 @@ mod tests {
         file_2.set_len(4000)?; // 4000 bytes
         file_3.set_len(5000)?; // 5000 bytes
 
+        let mut report = ReportData::new();
+
         let dir_str = temp_dir.path().to_str().unwrap().to_string();
         features::cleaner_file_duplicate::directory_cleaner_based_on_duplicate_files(
-            &dir_str, true,
+            &dir_str, true, &mut report
         )?;
 
         assert!(
@@ -277,7 +321,7 @@ mod tests {
             "All files should still exist"
         );
 
-        features::cleaner_file_size::directory_cleaner_based_on_file_size(&dir_str, 4500, true)?;
+        features::cleaner_file_size::directory_cleaner_based_on_file_size(&dir_str, 4500, true, &mut report)?;
 
         assert!(
             file_path_1.exists() && file_path_2.exists() && file_path_3.exists(),
@@ -322,11 +366,14 @@ mod tests {
             set_file_modification_time(&file_path_older, cutoff_date - chrono::Duration::days(2)); // Older than cutoff
             set_file_modification_time(&file_path_newer, cutoff_date + chrono::Duration::days(2)); // Newer than cutoff
 
+            let mut report = ReportData::new();
+
             // Run directory cleaner
             let result = features::cleaner_last_modified_time::directory_cleaner_based_on_age(
                 &dir_path,
                 cutoff_date_str,
                 false, // not a dry run, actually delete files
+                &mut report
             );
 
             assert!(result.is_ok());
@@ -350,11 +397,14 @@ mod tests {
             // Set file modification time (older than cutoff)
             set_file_modification_time(&file_path, cutoff_date - chrono::Duration::days(2));
 
+            let mut report = ReportData::new();
+
             // Run directory cleaner in dry run mode
             let result = features::cleaner_last_modified_time::directory_cleaner_based_on_age(
                 &dir_path,
                 cutoff_date_str,
                 true, // dry run mode
+                &mut report
             );
 
             assert!(result.is_ok());

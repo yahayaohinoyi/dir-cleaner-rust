@@ -4,11 +4,13 @@ use std::path::Path;
 use walkdir::WalkDir;
 
 use crate::features::utils::delete_file;
+use crate::ReportData;
 
 pub fn directory_cleaner_based_on_file_type(
     dir: &String,
     paths_to_clear: &[String],
     dry_run: bool,
+    report_data: &mut ReportData
 ) -> Result<()> {
     for entry in WalkDir::new(dir).into_iter().filter_map(|f| {
         match f {
