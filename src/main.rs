@@ -468,6 +468,8 @@ mod tests {
         assert!(report.total_files_retained == 1);
         assert!(report.total_file_size_retained == 500);
         assert!(report.total_file_size_deleted == 4000);
+        assert!(report.paths_deleted.len() == 1);
+        assert!(report.paths_retained.len() == 1);
         Ok(())
     }
 
