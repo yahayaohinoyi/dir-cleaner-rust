@@ -1,4 +1,5 @@
 use anyhow::{Context, Result};
+use std::collections::HashSet;
 use std::fs;
 use std::path::PathBuf;
 use walkdir::WalkDir;
@@ -17,23 +18,18 @@ pub fn directory_cleaner_based_on_file_size(
     let mut del_count: u32 = 0;
     let mut del_size: u64 = 0;
     // Convert paths_to_ignore to a collection of PathBuf for easier comparison
-    let ignore_set: Vec<PathBuf> = paths_to_ignore.iter().map(PathBuf::from).collect();
+    let ignore_set: HashSet<PathBuf> = paths_to_ignore.iter().map(PathBuf::from).collect();
     for entry in WalkDir::new(directory).into_iter() {
         match entry {
             Ok(dir) => {
                 let path = dir.path();
-
-                if ignore_set.iter().any(|ignore_path| path.starts_with(ignore_path)) {
-                    println!("Skipping ignored path: {:?}", path);
-                    continue; // Skip this path if it's in the ignore list
-                }
 
                 if path.is_file() {
                     let metadata = fs::metadata(path)
                         .with_context(|| format!("Failed to read metadata for file: {:?}", path))?;
 
                     if metadata.len() >= size {
-                        delete_file(path, dry_run)?;
+                        delete_file(path, dry_run, &ignore_set)?;
                         del_count += 1;
                         del_size += metadata.len();
                     }

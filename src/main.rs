@@ -119,7 +119,7 @@ fn main() -> Result<()> {
             &args.types,
             args.dry_run,
             &mut report_data,
-            &args.paths_to_ignore,
+            &args.files_to_ignore,
         )?;
     }
     if let Some(val) = args.min_size {
@@ -130,7 +130,7 @@ fn main() -> Result<()> {
             val,
             args.dry_run,
             &mut report_data,
-            &args.paths_to_ignore,
+            &args.files_to_ignore,
         )?;
     }
     if args.remove_duplicates {
@@ -142,7 +142,7 @@ fn main() -> Result<()> {
             &args.dir,
             args.dry_run,
             &mut report_data,
-            &args.paths_to_ignore,
+            &args.files_to_ignore,
         )?;
     }
     if let Some(age_value) = args.age {
@@ -152,7 +152,7 @@ fn main() -> Result<()> {
             age_value,
             args.dry_run,
             &mut report_data,
-            &args.paths_to_ignore,
+            &args.files_to_ignore,
         )?;
     }
 

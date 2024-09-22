@@ -1,4 +1,5 @@
 use anyhow::{Context, Result};
+use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
@@ -19,7 +20,7 @@ pub fn directory_cleaner_based_on_file_type(
     let mut del_size: u64 = 0;
 
     // Convert paths_to_ignore to a collection of PathBuf for easier comparison
-    let ignore_set: Vec<PathBuf> = paths_to_ignore.iter().map(PathBuf::from).collect();
+    let ignore_set: HashSet<PathBuf> = paths_to_ignore.iter().map(PathBuf::from).collect();
     for entry in WalkDir::new(dir).into_iter().filter_map(|f| {
         match f {
             Ok(entry) => Some(entry), // Return valid entries
@@ -35,8 +36,10 @@ pub fn directory_cleaner_based_on_file_type(
     }) {
         let path = entry.path();
 
-
-        if ignore_set.iter().any(|ignore_path| path.starts_with(ignore_path)) {
+        if ignore_set
+            .iter()
+            .any(|ignore_path| path.starts_with(ignore_path))
+        {
             println!("Skipping ignored path: {:?}", path);
             continue; // Skip this path if it's in the ignore list
         }
@@ -46,10 +49,11 @@ pub fn directory_cleaner_based_on_file_type(
 
             let metadata = fs::metadata(path)
                 .with_context(|| format!("Failed to read metadata for file: {:?}", path))?;
+
             if types_to_clear.iter().any(|p| ext == p) {
                 println!("Deleting file: {:?}", path);
 
-                delete_file(path, dry_run)?;
+                delete_file(path, dry_run, &ignore_set)?;
                 del_count += 1;
                 del_size += metadata.len();
             }
@@ -64,46 +68,39 @@ pub fn directory_cleaner_based_on_file_type(
     Ok(())
 }
 
-
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::fs::{self, File};
-    use std::io::Write;
     use std::path::Path;
     use tempdir::TempDir;
 
     #[test]
-    fn test_directory_cleaner_ignores_paths() {
+    fn test_directory_cleaner_ignores_files() {
         // Create a temporary directory for testing
         let temp_dir = TempDir::new("test_dir").expect("Failed to create temp dir");
 
         // Setup test directory structure
         let files_dir = temp_dir.path().join("Files");
-        let books_dir = files_dir.join("Documents/books");
         let texts_dir = files_dir.join("Documents/texts");
 
         // Create directories
-        fs::create_dir_all(&books_dir).expect("Failed to create books directory");
         fs::create_dir_all(&texts_dir).expect("Failed to create texts directory");
 
         // Create sample files
-        let book_file = books_dir.join("book1.txt");
-        let text_file = texts_dir.join("text1.txt");
+        let text_file_1 = texts_dir.join("text1.txt");
+        let text_file_2 = texts_dir.join("text2.txt");
 
-        let mut file = File::create(&book_file).expect("Failed to create book file");
-        writeln!(file, "This is a test book file").expect("Failed to write to book file");
-
-        let mut file = File::create(&text_file).expect("Failed to create text file");
-        writeln!(file, "This is a test text file").expect("Failed to write to text file");
+        // Create text files
+        File::create(&text_file_1).expect("Failed to create text1 file");
+        File::create(&text_file_2).expect("Failed to create text2 file");
 
         // Prepare parameters for the function
         let dir_to_clean = files_dir.to_str().unwrap().to_string();
-        let types_to_clear = vec!["txt".to_string()]; // We are clearing .txt files
+        let types_to_clear = vec!["txt".to_string()]; // Clearing .txt files
         let dry_run = false;
         let mut report_data = ReportData::new();
-        let paths_to_ignore = vec![books_dir.to_str().unwrap().to_string()]; // Ignore books directory
+        let files_to_ignore = vec!["text1.txt".to_string()]; // Ignore specific file
 
         // Run the cleaner function
         let result = directory_cleaner_based_on_file_type(
@@ -111,17 +108,22 @@ mod tests {
             &types_to_clear,
             dry_run,
             &mut report_data,
-            &paths_to_ignore,
+            &files_to_ignore,
         );
 
         // Ensure the function ran successfully
         assert!(result.is_ok());
 
-        // Check if the file in ignored path still exists
-        assert!(Path::new(&book_file).exists(), "Book file should not be deleted");
+        // Check if the ignored file still exists
+        assert!(
+            Path::new(&text_file_1).exists(),
+            "text1.txt should not be deleted"
+        );
 
-        // Check if the file in non-ignored path is deleted
-        assert!(!Path::new(&text_file).exists(), "Text file should be deleted");
+        // Check if the non-ignored file is deleted
+        assert!(
+            !Path::new(&text_file_2).exists(),
+            "text2.txt should be deleted"
+        );
     }
 }
-
