@@ -63,7 +63,7 @@ This is a command-line tool written in Rust that helps users clean their directo
 ### **Using Homebrew (Mac Only)**
 You can install the tool using **brew** by running the following command:
 ```bash
-brew tap brew tap mubarak-ramadan/homebrew-dir-cleaner-rust
+brew tap mubarak-ramadan/homebrew-dir-cleaner-rust
 ```
 then:
 ```bash
