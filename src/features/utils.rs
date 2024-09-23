@@ -1,12 +1,26 @@
+use crate::ReportData;
 use anyhow::{Context, Result};
 use chrono::{DateTime, NaiveDate, NaiveTime, TimeZone, Utc};
 use colored::*;
 use std::cmp::Ordering;
+use std::collections::HashSet;
 use std::fs::{self};
+use std::path::PathBuf;
 
-use crate::ReportData;
-
-pub fn delete_file(path: &std::path::Path, dry_run: bool) -> Result<()> {
+pub fn delete_file(
+    path: &std::path::Path,
+    dry_run: bool,
+    files_to_ignore: &HashSet<PathBuf>,
+) -> Result<()> {
+    if let Some(file_name) = path.file_name() {
+        if files_to_ignore
+            .iter()
+            .any(|ignore_path| ignore_path.file_name() == Some(file_name))
+        {
+            println!("Skipping ignored file: {:?}", path);
+            return Ok(()); // Skip this file if its name matches any in the ignore set
+        }
+    }
     if !dry_run {
         fs::remove_file(path).with_context(|| format!("Failed to delete file: {:?}", path))?;
     } else {

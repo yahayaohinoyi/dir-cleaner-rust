@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use std::collections::HashSet;
 use std::fs;
+use std::path::PathBuf;
 use walkdir::WalkDir;
 
 use crate::ReportData;
@@ -19,10 +20,13 @@ pub fn directory_cleaner_based_on_duplicate_files(
     directory: &String,
     dry_run: bool,
     report_data: &mut ReportData,
+    paths_to_ignore: &[String],
 ) -> Result<()> {
     let mut set: HashSet<String> = HashSet::new();
     let mut del_count: u32 = 0;
     let mut del_size: u64 = 0;
+    // Convert paths_to_ignore to a collection of PathBuf for easier comparison
+    let ignore_set: HashSet<PathBuf> = paths_to_ignore.iter().map(PathBuf::from).collect();
     for entry in WalkDir::new(directory).into_iter() {
         match entry {
             Ok(dir) => {
@@ -40,7 +44,7 @@ pub fn directory_cleaner_based_on_duplicate_files(
                     match file_key {
                         Some(file_key) => {
                             if set.contains(&file_key) {
-                                delete_file(path, dry_run)?;
+                                delete_file(path, dry_run, &ignore_set)?;
                                 del_count += 1;
                                 del_size += metadata.len();
                             } else {

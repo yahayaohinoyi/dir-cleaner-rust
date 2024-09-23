@@ -119,6 +119,7 @@ fn main() -> Result<()> {
             &args.types,
             args.dry_run,
             &mut report_data,
+            &args.files_to_ignore,
         )?;
     }
     if let Some(val) = args.min_size {
@@ -129,6 +130,7 @@ fn main() -> Result<()> {
             val,
             args.dry_run,
             &mut report_data,
+            &args.files_to_ignore,
         )?;
     }
     if args.remove_duplicates {
@@ -140,6 +142,7 @@ fn main() -> Result<()> {
             &args.dir,
             args.dry_run,
             &mut report_data,
+            &args.files_to_ignore,
         )?;
     }
     if let Some(age_value) = args.age {
@@ -149,6 +152,7 @@ fn main() -> Result<()> {
             age_value,
             args.dry_run,
             &mut report_data,
+            &args.files_to_ignore,
         )?;
     }
 
@@ -184,6 +188,7 @@ mod tests {
             &file_types,
             false,
             &mut report,
+            &[],
         )?;
 
         assert!(!file_path.exists(), "File should have been deleted");
@@ -208,6 +213,7 @@ mod tests {
             &file_types,
             true,
             &mut report,
+            &[],
         )?;
 
         assert!(file_path.exists(), "File shouldn't be deleted in dry run");
@@ -234,6 +240,7 @@ mod tests {
             2000,
             false,
             &mut report,
+            &[],
         )?;
 
         assert!(
@@ -268,6 +275,7 @@ mod tests {
             2000,
             true,
             &mut report,
+            &[],
         )?;
 
         assert!(
@@ -303,6 +311,7 @@ mod tests {
             &dir_str,
             false,
             &mut report,
+            &[],
         )?;
 
         assert!(
@@ -336,6 +345,7 @@ mod tests {
             &dir_str,
             true,
             &mut report,
+            &[],
         )?;
 
         assert!(
@@ -367,6 +377,7 @@ mod tests {
             &dir_str,
             false,
             &mut report,
+            &[],
         )?;
 
         assert!(
@@ -379,6 +390,7 @@ mod tests {
             4500,
             false,
             &mut report,
+            &[],
         )?;
 
         assert!(!file_path_3.exists(), "test 3 should now be deleted");
@@ -411,6 +423,7 @@ mod tests {
             &dir_str,
             true,
             &mut report,
+            &[],
         )?;
 
         assert!(
@@ -423,6 +436,7 @@ mod tests {
             4500,
             true,
             &mut report,
+            &[],
         )?;
 
         assert!(
@@ -451,6 +465,7 @@ mod tests {
             2000,
             false,
             &mut report,
+            &[],
         )?;
 
         assert!(
@@ -517,6 +532,7 @@ mod tests {
                 cutoff_date_str,
                 false, // not a dry run, actually delete files
                 &mut report,
+                &[],
             );
 
             assert!(result.is_ok());
@@ -548,6 +564,7 @@ mod tests {
                 cutoff_date_str,
                 true, // dry run mode
                 &mut report,
+                &[],
             );
 
             assert!(result.is_ok());

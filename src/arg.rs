@@ -8,6 +8,7 @@ pub struct Args {
     pub dry_run: bool,
     pub remove_duplicates: bool,
     pub age: Option<String>,
+    pub files_to_ignore: Vec<String>,
 }
 
 pub fn parse_args() -> Args {
@@ -60,6 +61,14 @@ pub fn parse_args() -> Args {
                 .value_parser(clap::value_parser!(String))
                 .help("Specify the cutoff date in YYYY-MM-DD format"),
         )
+        .arg(
+            Arg::new("files_to_ignore")
+                .short('i')
+                .long("files_to_ignore")
+                .required(false)
+                .num_args(1..) // Allow multiple values
+                .help("Files to ignore (space-separated)"),
+        )
         .get_matches();
 
     let dir = match arg.try_get_one::<String>("directory") {
@@ -100,6 +109,11 @@ pub fn parse_args() -> Args {
         Err(_) => None,
     };
 
+    let files_to_ignore = match arg.get_many::<String>("ignore_paths") {
+        Some(types) => types.cloned().collect(),
+        None => Vec::new(),
+    };
+
     Args {
         types,
         min_size,
@@ -107,5 +121,6 @@ pub fn parse_args() -> Args {
         dry_run,
         remove_duplicates,
         age,
+        files_to_ignore,
     }
 }
