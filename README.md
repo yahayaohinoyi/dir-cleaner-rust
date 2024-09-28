@@ -117,9 +117,11 @@ The texts in the file `<FILE>` should be new line separated and should the form 
 
 Run the command below to see full list;
   ```bash
-  dir-cleaner-rust -r -d <DIR>
+  dir-cleaner-rust -h
   ```
-![alt text](<Screenshot 2024-09-28 at 01.15.00.png>)
+
+![Screenshot 2024-09-28 at 01 15 00](https://github.com/user-attachments/assets/3dab9a73-d613-4f08-bb05-4485500f6cdd)
+
 ---
 
 ## **Contributing**
