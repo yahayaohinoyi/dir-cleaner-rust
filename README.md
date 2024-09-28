@@ -108,6 +108,18 @@ dir-cleaner-rust clean <directory> --filter <options>
   dir-cleaner-rust -r -d <DIR>
   ```
 
+- **Config File Support**:
+  ```bash
+  dir-cleaner-rust -f <FILE>
+  ```
+
+The texts in the file `<FILE>` should be new line separated and should the form `<verb> <arg>` where verb corresponds to one of the listed verbs above.   
+
+Run the command below to see full list;
+  ```bash
+  dir-cleaner-rust -r -d <DIR>
+  ```
+![alt text](<Screenshot 2024-09-28 at 01.15.00.png>)
 ---
 
 ## **Contributing**

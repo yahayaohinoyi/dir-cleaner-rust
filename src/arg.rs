@@ -1,6 +1,8 @@
-use clap::{Arg, Command};
+use clap::{Arg, ArgGroup, Command};
 
 const APP: &str = "Directory cleaner";
+
+#[derive(Debug)]
 pub struct Args {
     pub types: Vec<String>,
     pub min_size: Option<u64>,
@@ -9,6 +11,19 @@ pub struct Args {
     pub remove_duplicates: bool,
     pub age: Option<String>,
     pub files_to_ignore: Vec<String>,
+    pub config_file: Option<String>,
+}
+
+impl Args {
+    pub fn clear(&mut self) {
+        self.min_size = None;
+        self.types = vec![];
+        self.dir = "".to_string();
+        self.age = None;
+        self.dry_run = false;
+        self.files_to_ignore = vec![];
+        self.remove_duplicates = false;
+    }
 }
 
 pub fn parse_args() -> Args {
@@ -18,7 +33,7 @@ pub fn parse_args() -> Args {
             Arg::new("directory")
                 .short('d')
                 .long("dir")
-                .required(true)
+                .value_name("DIRECTORY")
                 .help("Directory to clean up"),
         )
         .arg(
@@ -62,20 +77,32 @@ pub fn parse_args() -> Args {
                 .help("Specify the cutoff date in YYYY-MM-DD format"),
         )
         .arg(
-            Arg::new("files_to_ignore")
+            Arg::new("ignore_paths")
                 .short('i')
                 .long("files_to_ignore")
                 .required(false)
                 .num_args(1..) // Allow multiple values
                 .help("Files to ignore (space-separated)"),
         )
+        .arg(
+            Arg::new("config_file")
+                .short('f')
+                .long("file")
+                .value_name("FILE")
+                .help("Config file containing cleanup metadata"),
+        )
+        .group(
+            ArgGroup::new("directrory_or_config_file")
+                .args(&["directory", "config_file"])
+                .required(true), // One of these must be present
+        )
         .get_matches();
 
     let dir = match arg.try_get_one::<String>("directory") {
         Ok(Some(dir)) => dir.to_string(),
         Ok(None) => {
-            eprintln!("Error: Directory to clean is missing");
-            std::process::exit(1);
+            println!("No directory provided, expecting config file");
+            String::new()
         }
         Err(e) => {
             eprintln!("Error processing directory: {:?}", e);
@@ -114,6 +141,12 @@ pub fn parse_args() -> Args {
         None => Vec::new(),
     };
 
+    let config_file: Option<String> = match arg.try_get_one::<String>("config_file") {
+        Ok(Some(val)) => Some(val.to_string()),
+        Ok(None) => None,
+        Err(_) => None,
+    };
+
     Args {
         types,
         min_size,
@@ -122,5 +155,6 @@ pub fn parse_args() -> Args {
         remove_duplicates,
         age,
         files_to_ignore,
+        config_file,
     }
 }
