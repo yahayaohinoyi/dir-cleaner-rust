@@ -1,7 +1,7 @@
 use anyhow::Result;
 use colored::*;
 use features::utils::read_file_and_rebuild_args;
-use std::time::Instant;
+use std::{collections::HashSet, time::Instant};
 mod arg;
 mod features;
 
@@ -89,7 +89,9 @@ impl ReportData {
         // Paths of retained files (if any)
         if !self.paths_retained.is_empty() {
             println!("\n{}", "Paths Retained".bold().yellow());
-            for path in &self.paths_retained {
+            let paths_retained_unique: HashSet<_> = self.paths_retained.iter().cloned().collect();
+
+            for path in paths_retained_unique {
                 println!("{}", path.yellow());
             }
         }
