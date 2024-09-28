@@ -1,5 +1,6 @@
 use anyhow::Result;
 use colored::*;
+use features::utils::read_file_and_rebuild_args;
 use std::time::Instant;
 mod arg;
 mod features;
@@ -96,10 +97,14 @@ impl ReportData {
 }
 
 fn main() -> Result<()> {
-    let args = arg::parse_args();
+    let mut args = arg::parse_args();
 
     let mut report_data = ReportData::new();
     let start = Instant::now();
+
+    if args.config_file.is_some() {
+        read_file_and_rebuild_args(&mut args)?;
+    }
 
     if args.dry_run {
         println!("{}", "=== Dry Run Report ===".bold().underline().cyan());
