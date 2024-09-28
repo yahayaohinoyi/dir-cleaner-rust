@@ -205,7 +205,7 @@ pub fn read_file_and_rebuild_args(args: &mut crate::arg::Args) -> Result<()> {
         }
     }
 
-    if !args.dir.len() > 0 {
+    if args.dir.len() == 0 {
         eprint!("dir not present in the config file");
         std::process::exit(1);
     }

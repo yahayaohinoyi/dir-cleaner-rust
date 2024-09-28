@@ -1,6 +1,8 @@
 use clap::{Arg, ArgGroup, Command};
 
 const APP: &str = "Directory cleaner";
+
+#[derive(Debug)]
 pub struct Args {
     pub types: Vec<String>,
     pub min_size: Option<u64>,
@@ -75,7 +77,7 @@ pub fn parse_args() -> Args {
                 .help("Specify the cutoff date in YYYY-MM-DD format"),
         )
         .arg(
-            Arg::new("files_to_ignore")
+            Arg::new("ignore_paths")
                 .short('i')
                 .long("files_to_ignore")
                 .required(false)
@@ -99,8 +101,8 @@ pub fn parse_args() -> Args {
     let dir = match arg.try_get_one::<String>("directory") {
         Ok(Some(dir)) => dir.to_string(),
         Ok(None) => {
-            eprintln!("Error: Directory to clean is missing");
-            std::process::exit(1);
+            println!("No directory provided, expecting config file");
+            String::new()
         }
         Err(e) => {
             eprintln!("Error processing directory: {:?}", e);
